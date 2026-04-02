@@ -1,0 +1,1056 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#0c0f14">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Скенер">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Скенер Разписки — Microinvest</title>
+
+<!-- Inline Manifest -->
+<script>
+const manifest = {
+  name: "Скенер Разписки — Microinvest Склад Про",
+  short_name: "Скенер",
+  description: "Сканирай стокови разписки и експортирай за Microinvest Склад Про",
+  start_url: "./",
+  display: "standalone",
+  orientation: "portrait",
+  theme_color: "#0c0f14",
+  background_color: "#0c0f14",
+  icons: [
+    { src: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='90' fill='%230c0f14'/><rect x='40' y='40' width='432' height='432' rx='60' fill='%23161c24'/><text x='256' y='300' text-anchor='middle' font-size='220'>📋</text><rect x='80' y='380' width='352' height='8' rx='4' fill='%23e05030'/></svg>", sizes: "512x512", type: "image/svg+xml", purpose: "any maskable" }
+  ],
+  categories: ["business", "productivity"],
+  lang: "bg",
+  permissions: ["camera"]
+};
+const blob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
+const link = document.createElement('link');
+link.rel = 'manifest';
+link.href = URL.createObjectURL(blob);
+document.head.appendChild(link);
+</script>
+
+<!-- Apple Touch Icon -->
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect width='180' height='180' rx='40' fill='%230c0f14'/><text x='90' y='115' text-anchor='middle' font-size='80'>📋</text></svg>">
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,400&family=DM+Mono:wght@400;500&display=swap');
+
+:root {
+  --bg-deep: #0c0f14;
+  --bg-card: #141920;
+  --bg-input: #0e1218;
+  --border: #1e2530;
+  --border-hover: #2a3444;
+  --text: #b8c4d4;
+  --text-dim: #566477;
+  --text-bright: #e8edf4;
+  --accent: #e05030;
+  --accent-glow: rgba(224,80,48,0.25);
+  --accent-dark: #c43e22;
+  --green: #2ea85a;
+  --green-bg: #0d2818;
+  --red: #e04050;
+  --red-bg: #2a0f14;
+  --radius: 14px;
+  --radius-sm: 10px;
+  --font: 'DM Sans', -apple-system, sans-serif;
+  --mono: 'DM Mono', 'SF Mono', monospace;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { 
+  height: 100%; overflow-x: hidden;
+  font-family: var(--font); color: var(--text); background: var(--bg-deep);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+/* Animations */
+@keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .4; } }
+@keyframes scanBeam { 0% { top: 10%; } 100% { top: 85%; } }
+@keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+@keyframes toastIn { from { opacity: 0; transform: translateY(-20px) scale(.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Inputs */
+input, select, textarea {
+  background: var(--bg-input); border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+  color: var(--text-bright); padding: 11px 14px; font-family: var(--font); font-size: 14px;
+  width: 100%; transition: border-color .2s, box-shadow .2s; outline: none;
+}
+input:focus, select:focus, textarea:focus {
+  border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow);
+}
+input[type="number"] { -moz-appearance: textfield; }
+input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; }
+select { cursor: pointer; appearance: none; padding-right: 32px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23566477' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 12px center;
+}
+label { font-size: 11px; color: var(--text-dim); display: block; margin-bottom: 4px; font-weight: 600; letter-spacing: .3px; text-transform: uppercase; }
+
+/* Toast */
+.toast {
+  position: fixed; top: calc(12px + var(--safe-top)); left: 16px; right: 16px; z-index: 9000;
+  padding: 14px 20px; border-radius: var(--radius); font-size: 14px; font-weight: 600;
+  text-align: center; animation: toastIn .3s ease; pointer-events: none;
+  box-shadow: 0 12px 40px rgba(0,0,0,.5);
+}
+.toast.success { background: var(--green-bg); color: var(--green); border: 1px solid rgba(46,168,90,.3); }
+.toast.error { background: var(--red-bg); color: var(--red); border: 1px solid rgba(224,64,80,.3); }
+
+/* Buttons */
+.btn-primary {
+  width: 100%; padding: 18px; border: none; border-radius: var(--radius);
+  background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+  color: #fff; font-size: 16px; font-weight: 700; font-family: var(--font);
+  cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;
+  box-shadow: 0 4px 24px var(--accent-glow);
+  transition: transform .15s, box-shadow .15s; position: relative; overflow: hidden;
+}
+.btn-primary:active { transform: scale(.97); box-shadow: 0 2px 12px var(--accent-glow); }
+.btn-primary .shine {
+  position: absolute; top: 0; left: -100%; width: 50%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.08), transparent);
+  transition: left .6s;
+}
+.btn-primary:hover .shine { left: 150%; }
+
+.btn-secondary {
+  padding: 14px 16px; border: 1.5px solid var(--border); border-radius: var(--radius);
+  background: var(--bg-card); color: var(--text); font-size: 14px; font-weight: 600;
+  font-family: var(--font); cursor: pointer; display: flex; align-items: center;
+  justify-content: center; gap: 8px; transition: all .2s; flex: 1;
+}
+.btn-secondary:active { background: var(--border); }
+
+.btn-icon {
+  background: var(--bg-card); border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+  color: var(--text-dim); cursor: pointer; font-size: 15px; padding: 8px 10px;
+  transition: all .15s; display: flex; align-items: center; justify-content: center;
+}
+.btn-icon:active { background: var(--border); }
+
+.btn-danger { border-color: rgba(224,64,80,.25); color: var(--red); }
+.btn-green { background: var(--green-bg); border-color: rgba(46,168,90,.3); color: var(--green); }
+
+/* Card */
+.card {
+  background: var(--bg-card); border: 1.5px solid var(--border); border-radius: var(--radius);
+  overflow: hidden; transition: border-color .25s; animation: fadeUp .35s ease both;
+  margin-bottom: 12px;
+}
+.card:active { border-color: var(--border-hover); }
+
+/* Camera fullscreen */
+.camera-overlay {
+  position: fixed; inset: 0; z-index: 5000; background: #000;
+  display: flex; flex-direction: column;
+}
+.camera-overlay video {
+  flex: 1; object-fit: cover; width: 100%;
+}
+.camera-viewfinder {
+  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  width: 85%; max-width: 360px; aspect-ratio: 3/4;
+  border: 2px solid rgba(255,255,255,.25); border-radius: 16px;
+  pointer-events: none;
+}
+.camera-viewfinder::before {
+  content: ''; position: absolute; left: 10%; right: 10%; height: 2px;
+  background: var(--accent); box-shadow: 0 0 20px var(--accent), 0 0 60px var(--accent);
+  border-radius: 2px; animation: scanBeam 2s ease-in-out infinite alternate;
+}
+.camera-controls {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  padding: 20px 24px calc(20px + var(--safe-bottom)); display: flex;
+  align-items: center; justify-content: space-between;
+  background: linear-gradient(transparent, rgba(0,0,0,.85));
+}
+.camera-shutter {
+  width: 72px; height: 72px; border-radius: 50%; border: 4px solid #fff;
+  background: transparent; cursor: pointer; position: relative;
+  transition: all .15s;
+}
+.camera-shutter::after {
+  content: ''; position: absolute; inset: 4px; border-radius: 50%;
+  background: #fff; transition: all .15s;
+}
+.camera-shutter:active::after { background: var(--accent); inset: 6px; }
+.camera-close {
+  width: 44px; height: 44px; border-radius: 50%; border: none;
+  background: rgba(255,255,255,.15); color: #fff; font-size: 18px;
+  cursor: pointer; backdrop-filter: blur(8px);
+}
+.camera-flash {
+  width: 44px; height: 44px; border-radius: 50%; border: none;
+  background: rgba(255,255,255,.15); color: #fff; font-size: 18px;
+  cursor: pointer; backdrop-filter: blur(8px);
+}
+
+/* Processing overlay */
+.processing-overlay {
+  position: fixed; inset: 0; z-index: 6000;
+  background: rgba(12,15,20,.96); display: flex;
+  flex-direction: column; align-items: center; justify-content: center; gap: 20px;
+}
+.processing-preview {
+  width: 150px; height: 200px; border-radius: 16px; overflow: hidden;
+  border: 2px solid var(--accent); position: relative;
+}
+.processing-preview img { width: 100%; height: 100%; object-fit: cover; }
+.processing-beam {
+  position: absolute; left: 0; width: 100%; height: 3px;
+  background: var(--accent); box-shadow: 0 0 20px var(--accent);
+  animation: scanBeam 1.8s ease-in-out infinite alternate;
+}
+
+/* Header */
+.app-header {
+  padding: calc(16px + var(--safe-top)) 16px 12px;
+  background: rgba(12,15,20,.8); backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 100;
+}
+
+/* Tab bar */
+.tab-bar {
+  display: flex; gap: 4px; background: var(--bg-input); border-radius: var(--radius-sm);
+  padding: 3px; margin-bottom: 16px;
+}
+.tab {
+  flex: 1; padding: 10px; border: none; border-radius: 8px;
+  background: transparent; color: var(--text-dim); font-size: 13px;
+  font-weight: 600; font-family: var(--font); cursor: pointer; transition: all .2s;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.tab.active { background: var(--bg-card); color: var(--text-bright); box-shadow: 0 1px 4px rgba(0,0,0,.2); }
+
+/* Search */
+.search-wrap {
+  position: relative; margin-bottom: 12px;
+}
+.search-wrap input { padding-left: 36px; }
+.search-wrap .search-icon {
+  position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+  color: var(--text-dim); font-size: 14px; pointer-events: none;
+}
+
+/* Item row in edit */
+.item-block {
+  background: var(--bg-deep); border-radius: var(--radius-sm); padding: 12px;
+  margin-bottom: 8px; border: 1px solid var(--border); position: relative;
+}
+.item-block .remove-item {
+  position: absolute; top: 8px; right: 8px; background: none; border: none;
+  color: var(--red); cursor: pointer; font-size: 16px; padding: 4px; opacity: .6;
+}
+.item-block .remove-item:hover { opacity: 1; }
+
+/* Table */
+.items-table {
+  background: var(--bg-deep); border-radius: var(--radius-sm);
+  border: 1px solid var(--border); overflow: hidden;
+}
+.items-table .t-header {
+  display: grid; grid-template-columns: 2.5fr .8fr .8fr 1fr;
+  padding: 8px 12px; font-size: 10px; color: var(--text-dim);
+  text-transform: uppercase; letter-spacing: .5px; border-bottom: 1px solid var(--border);
+  font-family: var(--mono);
+}
+.items-table .t-row {
+  display: grid; grid-template-columns: 2.5fr .8fr .8fr 1fr;
+  padding: 9px 12px; font-size: 12px; border-bottom: 1px solid rgba(30,37,48,.5);
+  font-family: var(--mono);
+}
+.items-table .t-row:last-child { border-bottom: none; }
+.items-table .t-total {
+  display: grid; grid-template-columns: 2.5fr .8fr .8fr 1fr;
+  padding: 10px 12px; border-top: 1px solid var(--border);
+  background: rgba(224,80,48,.04);
+}
+
+/* Install banner */
+.install-banner {
+  background: linear-gradient(135deg, rgba(224,80,48,.1), rgba(224,80,48,.05));
+  border: 1px solid rgba(224,80,48,.2); border-radius: var(--radius);
+  padding: 14px 16px; margin-bottom: 16px; display: flex;
+  align-items: center; gap: 12px; animation: fadeUp .4s ease;
+}
+.install-banner button {
+  padding: 8px 16px; border: none; border-radius: 8px;
+  background: var(--accent); color: #fff; font-size: 13px;
+  font-weight: 700; font-family: var(--font); cursor: pointer; white-space: nowrap;
+}
+
+/* Empty state */
+.empty-state {
+  text-align: center; padding: 60px 24px; color: var(--text-dim);
+}
+.empty-state .icon { font-size: 56px; opacity: .25; margin-bottom: 16px; }
+</style>
+</head>
+<body>
+
+<div id="app"></div>
+
+<script>
+// ═══════════════════════════════════════
+// SERVICE WORKER REGISTRATION
+// ═══════════════════════════════════════
+if ('serviceWorker' in navigator) {
+  const swCode = `
+    const CACHE = 'receipt-scanner-v2';
+    const ASSETS = ['./', './index.html'];
+    self.addEventListener('install', e => { self.skipWaiting(); });
+    self.addEventListener('activate', e => { e.waitUntil(clients.claim()); });
+    self.addEventListener('fetch', e => {
+      if (e.request.url.includes('api.anthropic.com')) return;
+      e.respondWith(
+        caches.match(e.request).then(r => r || fetch(e.request).then(resp => {
+          if (resp.ok && e.request.method === 'GET') {
+            const clone = resp.clone();
+            caches.open(CACHE).then(c => c.put(e.request, clone));
+          }
+          return resp;
+        }).catch(() => caches.match('./')))
+      );
+    });
+  `;
+  const swBlob = new Blob([swCode], { type: 'application/javascript' });
+  const swUrl = URL.createObjectURL(swBlob);
+  navigator.serviceWorker.register(swUrl).catch(() => {});
+}
+
+// ═══════════════════════════════════════
+// APP STATE
+// ═══════════════════════════════════════
+const DB_KEY = 'receipt_scanner_data_v4';
+let state = {
+  records: [],
+  view: 'list',       // list | camera | processing | edit
+  editIdx: null,
+  editData: null,
+  previewImg: null,
+  searchQuery: '',
+  exportFormat: 'csv',
+  activeTab: 'scan',   // scan | records | export
+  cameraStream: null,
+  flashOn: false,
+  installPrompt: null,
+};
+
+function loadData() {
+  try { state.records = JSON.parse(localStorage.getItem(DB_KEY) || '[]'); } catch { state.records = []; }
+}
+function saveData() {
+  localStorage.setItem(DB_KEY, JSON.stringify(state.records));
+}
+loadData();
+
+// Install prompt
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  render();
+});
+
+// ═══════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════
+let toastTimeout = null;
+function showToast(msg, type = 'success') {
+  clearTimeout(toastTimeout);
+  const t = document.getElementById('toast');
+  t.textContent = (type === 'error' ? '⚠ ' : '✓ ') + msg;
+  t.className = 'toast ' + type;
+  t.style.display = 'block';
+  toastTimeout = setTimeout(() => { t.style.display = 'none'; }, 3000);
+}
+
+// ═══════════════════════════════════════
+// CAMERA
+// ═══════════════════════════════════════
+async function openCamera() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } }
+    });
+    state.cameraStream = stream;
+    state.view = 'camera';
+    render();
+    const video = document.getElementById('cam-video');
+    if (video) { video.srcObject = stream; video.play(); }
+  } catch (e) {
+    // Fallback to file input
+    document.getElementById('file-camera').click();
+  }
+}
+
+function closeCamera() {
+  if (state.cameraStream) {
+    state.cameraStream.getTracks().forEach(t => t.stop());
+    state.cameraStream = null;
+  }
+  state.view = 'list';
+  state.flashOn = false;
+  render();
+}
+
+function capturePhoto() {
+  const video = document.getElementById('cam-video');
+  if (!video) return;
+  const canvas = document.createElement('canvas');
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  canvas.getContext('2d').drawImage(video, 0, 0);
+  const dataUrl = canvas.toDataURL('image/jpeg', 0.88);
+  closeCamera();
+  processImage(dataUrl);
+}
+
+async function toggleFlash() {
+  if (!state.cameraStream) return;
+  const track = state.cameraStream.getVideoTracks()[0];
+  try {
+    state.flashOn = !state.flashOn;
+    await track.applyConstraints({ advanced: [{ torch: state.flashOn }] });
+    render();
+  } catch { state.flashOn = false; }
+}
+
+// ═══════════════════════════════════════
+// FILE INPUT HANDLER
+// ═══════════════════════════════════════
+function handleFileInput(e) {
+  const file = e.target.files?.[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => processImage(ev.target.result);
+  reader.readAsDataURL(file);
+  e.target.value = '';
+}
+
+// ═══════════════════════════════════════
+// OCR
+// ═══════════════════════════════════════
+async function processImage(dataUrl) {
+  state.view = 'processing';
+  state.previewImg = dataUrl;
+  render();
+
+  try {
+    const imageData = dataUrl.split(',')[1];
+    const mediaType = dataUrl.startsWith('data:image/png') ? 'image/png' : 'image/jpeg';
+
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 2000,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'image', source: { type: 'base64', media_type: mediaType, data: imageData } },
+            { type: 'text', text: `Анализирай внимателно тази стокова разписка / фактура / приемо-предавателен протокол.
+Върни САМО валиден JSON обект (без markdown, без \`\`\`json):
+{
+  "docNumber": "номер на документа",
+  "date": "дата ДД.ММ.ГГГГ",
+  "partner": "доставчик или клиент",
+  "note": "забележка",
+  "items": [
+    { "code": "код/баркод", "name": "наименование на стоката", "unit": "мярка (бр., кг, л)", "quantity": число, "price": единична_цена }
+  ]
+}
+Празни полета: "" за текст, 0 за числа. САМО JSON.` }
+          ]
+        }]
+      })
+    });
+
+    const data = await res.json();
+    
+    if (data.error) {
+      throw new Error(data.error.message || 'API грешка');
+    }
+
+    const text = data.content?.map(b => b.text || '').join('') || '';
+    const clean = text.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(clean);
+
+    const newRec = {
+      ...parsed,
+      id: Date.now(),
+      timestamp: new Date().toISOString(),
+      thumbnail: dataUrl.substring(0, 200) // just a marker
+    };
+
+    state.records.unshift(newRec);
+    saveData();
+    showToast(`Разписка ${parsed.docNumber || '#' + state.records.length} добавена`);
+  } catch (e) {
+    showToast('Грешка: ' + e.message, 'error');
+  }
+
+  state.view = 'list';
+  state.activeTab = 'records';
+  state.previewImg = null;
+  render();
+}
+
+// ═══════════════════════════════════════
+// RECORD OPERATIONS
+// ═══════════════════════════════════════
+function deleteRecord(idx) {
+  if (!confirm('Изтриване на този запис?')) return;
+  state.records.splice(idx, 1);
+  saveData();
+  showToast('Изтрит');
+  render();
+}
+
+function startEdit(idx) {
+  state.editIdx = idx;
+  state.editData = JSON.parse(JSON.stringify(state.records[idx]));
+  state.view = 'edit';
+  render();
+}
+
+function saveEdit() {
+  state.records[state.editIdx] = state.editData;
+  saveData();
+  state.view = 'list';
+  state.editIdx = null;
+  state.editData = null;
+  showToast('Запазено');
+  render();
+}
+
+function cancelEdit() {
+  state.view = 'list';
+  state.editIdx = null;
+  state.editData = null;
+  render();
+}
+
+function addManual() {
+  const newRec = {
+    id: Date.now(), timestamp: new Date().toISOString(),
+    docNumber: '', date: new Date().toLocaleDateString('bg-BG'),
+    partner: '', note: '',
+    items: [{ code: '', name: '', unit: 'бр.', quantity: 0, price: 0 }]
+  };
+  state.records.unshift(newRec);
+  saveData();
+  startEdit(0);
+}
+
+function duplicateRecord(idx) {
+  const dup = JSON.parse(JSON.stringify(state.records[idx]));
+  dup.id = Date.now();
+  dup.timestamp = new Date().toISOString();
+  dup.docNumber = (dup.docNumber || '') + ' (копие)';
+  state.records.splice(idx + 1, 0, dup);
+  saveData();
+  showToast('Дублирано');
+  render();
+}
+
+// ═══════════════════════════════════════
+// EXPORT
+// ═══════════════════════════════════════
+function generateCSV(records) {
+  const h = ['Номер','Дата','Партньор','Код','Наименование','Мярка','Количество','Ед.цена','Стойност','Забележка'].join('\t');
+  const rows = records.flatMap((r, i) => r.items.map(it =>
+    [r.docNumber||`DOC-${i+1}`, r.date||'', r.partner||'', it.code||'', it.name||'',
+     it.unit||'бр.', it.quantity||0, it.price||0,
+     ((it.quantity||0)*(it.price||0)).toFixed(2), r.note||''].join('\t')
+  ));
+  return '\uFEFF' + [h, ...rows].join('\n');
+}
+
+function generateXML(records) {
+  const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const rows = records.flatMap((r,i) => r.items.map(it => `
+    <Row>
+      <DocumentNumber>${r.docNumber||`DOC-${i+1}`}</DocumentNumber>
+      <Date>${r.date||''}</Date>
+      <Partner>${esc(r.partner||'')}</Partner>
+      <ProductCode>${esc(it.code||'')}</ProductCode>
+      <ProductName>${esc(it.name||'')}</ProductName>
+      <Unit>${esc(it.unit||'бр.')}</Unit>
+      <Quantity>${it.quantity||0}</Quantity>
+      <UnitPrice>${it.price||0}</UnitPrice>
+      <TotalPrice>${((it.quantity||0)*(it.price||0)).toFixed(2)}</TotalPrice>
+    </Row>`));
+  return `<?xml version="1.0" encoding="utf-8"?>\n<Import>\n  <Documents>${rows.join('')}\n  </Documents>\n</Import>`;
+}
+
+function doExport(which) {
+  let toExport = state.records;
+  if (which === 'today') {
+    const todayStr = new Date().toDateString();
+    toExport = state.records.filter(r => new Date(r.timestamp).toDateString() === todayStr);
+  }
+  if (!toExport.length) { showToast('Няма записи за експорт', 'error'); return; }
+
+  const fmt = state.exportFormat;
+  const content = fmt === 'csv' ? generateCSV(toExport) : generateXML(toExport);
+  const ext = fmt === 'csv' ? 'txt' : 'xml';
+  const blob = new Blob([content], { type: 'application/octet-stream' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `microinvest_${new Date().toISOString().slice(0,10)}.${ext}`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  showToast(`Експортирани ${toExport.length} записа`);
+}
+
+function clearAll() {
+  if (!confirm('Изтриване на ВСИЧКИ записи?')) return;
+  state.records = [];
+  saveData();
+  showToast('Изчистено');
+  render();
+}
+
+// ═══════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════
+function h(tag, attrs, ...children) {
+  const el = document.createElement(tag);
+  if (attrs) Object.entries(attrs).forEach(([k,v]) => {
+    if (k === 'style' && typeof v === 'object') Object.assign(el.style, v);
+    else if (k.startsWith('on')) el.addEventListener(k.slice(2).toLowerCase(), v);
+    else if (k === 'className') el.className = v;
+    else if (k === 'innerHTML') el.innerHTML = v;
+    else el.setAttribute(k, v);
+  });
+  children.flat(Infinity).forEach(c => {
+    if (c == null) return;
+    el.appendChild(typeof c === 'string' ? document.createTextNode(c) : c);
+  });
+  return el;
+}
+
+function render() {
+  const app = document.getElementById('app');
+  app.innerHTML = '';
+
+  // Camera view
+  if (state.view === 'camera') {
+    app.appendChild(renderCamera());
+    return;
+  }
+
+  // Processing overlay
+  if (state.view === 'processing') {
+    app.appendChild(renderProcessing());
+    return;
+  }
+
+  // Edit view
+  if (state.view === 'edit') {
+    app.appendChild(renderEdit());
+    return;
+  }
+
+  // Main list view
+  app.appendChild(renderMain());
+}
+
+function renderCamera() {
+  const overlay = h('div', { className: 'camera-overlay' },
+    h('video', { id: 'cam-video', autoplay: '', playsinline: '', muted: '' }),
+    h('div', { className: 'camera-viewfinder' }),
+    h('div', { className: 'camera-controls' },
+      h('button', { className: 'camera-close', onClick: closeCamera, innerHTML: '✕' }),
+      h('button', { className: 'camera-shutter', onClick: capturePhoto }),
+      h('button', { className: 'camera-flash', onClick: toggleFlash, innerHTML: state.flashOn ? '⚡' : '🔦',
+        style: { background: state.flashOn ? 'rgba(255,200,0,.3)' : 'rgba(255,255,255,.15)' } })
+    )
+  );
+  setTimeout(() => {
+    const v = document.getElementById('cam-video');
+    if (v && state.cameraStream) { v.srcObject = state.cameraStream; v.play(); }
+  }, 50);
+  return overlay;
+}
+
+function renderProcessing() {
+  return h('div', { className: 'processing-overlay' },
+    state.previewImg ? h('div', { className: 'processing-preview' },
+      h('img', { src: state.previewImg }),
+      h('div', { className: 'processing-beam' })
+    ) : null,
+    h('div', { style: { fontFamily: 'var(--font)', fontSize: '18px', fontWeight: 700, color: 'var(--text-bright)' } }, 'Разпознаване на разписка...'),
+    h('div', { style: { fontSize: '13px', color: 'var(--text-dim)', animation: 'pulse 1.5s infinite' } }, 'Claude анализира документа'),
+    h('div', { style: { marginTop: '16px', width: '200px', height: '3px', borderRadius: '2px', background: 'var(--border)', overflow: 'hidden' } },
+      h('div', { style: { width: '40%', height: '100%', background: 'var(--accent)', borderRadius: '2px',
+        animation: 'shimmer 1.5s ease-in-out infinite', backgroundSize: '200% 100%',
+        backgroundImage: 'linear-gradient(90deg, var(--accent), var(--accent-dark), var(--accent))' } })
+    )
+  );
+}
+
+function renderMain() {
+  const frag = document.createDocumentFragment();
+
+  // Hidden inputs
+  const fc = h('input', { type: 'file', accept: 'image/*', capture: 'environment', id: 'file-camera', style: { display: 'none' }, onChange: handleFileInput });
+  const fg = h('input', { type: 'file', accept: 'image/*', id: 'file-gallery', style: { display: 'none' }, onChange: handleFileInput });
+  frag.appendChild(fc);
+  frag.appendChild(fg);
+
+  // Header
+  frag.appendChild(h('header', { className: 'app-header' },
+    h('div', { style: { maxWidth: '800px', margin: '0 auto', display: 'flex', alignItems: 'center', gap: '12px' } },
+      h('div', { style: { width: '40px', height: '40px', borderRadius: '12px',
+        background: 'linear-gradient(135deg, var(--accent), var(--accent-dark))',
+        display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', flexShrink: 0 },
+        innerHTML: '📋' }),
+      h('div', null,
+        h('div', { style: { fontSize: '19px', fontWeight: 800, color: 'var(--text-bright)', letterSpacing: '-0.5px' } }, 'Скенер Разписки'),
+        h('div', { style: { fontSize: '11px', color: 'var(--text-dim)', marginTop: '1px', fontFamily: 'var(--mono)' } },
+          `Microinvest Склад Про · ${new Date().toLocaleDateString('bg-BG')}`)
+      )
+    )
+  ));
+
+  const main = h('main', { style: { maxWidth: '800px', margin: '0 auto', padding: '16px 16px 100px' } });
+
+  // Install banner
+  if (deferredPrompt) {
+    main.appendChild(h('div', { className: 'install-banner' },
+      h('div', { style: { flex: 1 } },
+        h('div', { style: { fontSize: '14px', fontWeight: 700, color: 'var(--text-bright)', marginBottom: '2px' } }, 'Инсталирай на телефона'),
+        h('div', { style: { fontSize: '12px', color: 'var(--text-dim)' } }, 'Работи офлайн, като истинско приложение')
+      ),
+      h('button', { onClick: async () => {
+        if (deferredPrompt) { deferredPrompt.prompt(); const r = await deferredPrompt.userChoice; deferredPrompt = null; render(); }
+      } }, 'Инсталирай')
+    ));
+  }
+
+  // Stats
+  const totalItems = state.records.reduce((s,r) => s + (r.items?.length||0), 0);
+  const totalVal = state.records.reduce((s,r) => s + (r.items||[]).reduce((ss,it) => ss + (it.quantity||0)*(it.price||0), 0), 0);
+  const todayCount = state.records.filter(r => new Date(r.timestamp).toDateString() === new Date().toDateString()).length;
+
+  const stats = h('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '8px', marginBottom: '16px' } });
+  [
+    { l: 'Днес', v: todayCount, i: '📅' },
+    { l: 'Общо', v: state.records.length, i: '📄' },
+    { l: 'Артикули', v: totalItems, i: '📦' },
+    { l: 'Стойност', v: totalVal.toFixed(0) + 'лв', i: '💰' }
+  ].forEach(s => {
+    stats.appendChild(h('div', { style: {
+      background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)',
+      padding: '10px 6px', textAlign: 'center'
+    } },
+      h('div', { style: { fontSize: '14px' }, innerHTML: s.i }),
+      h('div', { style: { fontSize: '16px', fontWeight: 700, color: 'var(--text-bright)', fontFamily: 'var(--mono)' } }, String(s.v)),
+      h('div', { style: { fontSize: '9px', color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '.5px' } }, s.l)
+    ));
+  });
+  main.appendChild(stats);
+
+  // Tab bar
+  const tabs = h('div', { className: 'tab-bar' });
+  [
+    { id: 'scan', label: '📸 Сканирай', },
+    { id: 'records', label: '📄 Записи (' + state.records.length + ')' },
+    { id: 'export', label: '⬇️ Експорт' }
+  ].forEach(t => {
+    tabs.appendChild(h('button', {
+      className: 'tab' + (state.activeTab === t.id ? ' active' : ''),
+      onClick: () => { state.activeTab = t.id; render(); }
+    }, t.label));
+  });
+  main.appendChild(tabs);
+
+  // ── SCAN TAB ──
+  if (state.activeTab === 'scan') {
+    main.appendChild(h('button', { className: 'btn-primary', onClick: openCamera, style: { marginBottom: '12px' } },
+      h('span', { className: 'shine' }),
+      '📸  Отвори камерата'
+    ));
+    const row = h('div', { style: { display: 'flex', gap: '10px', marginBottom: '20px' } });
+    row.appendChild(h('button', { className: 'btn-secondary', onClick: () => document.getElementById('file-gallery').click() }, '🖼️ Галерия'));
+    row.appendChild(h('button', { className: 'btn-secondary', onClick: addManual }, '✏️ Ръчен запис'));
+    main.appendChild(row);
+
+    // Tips
+    main.appendChild(h('div', { style: {
+      background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius)',
+      padding: '20px'
+    } },
+      h('div', { style: { fontSize: '14px', fontWeight: 700, color: 'var(--text-bright)', marginBottom: '12px' } }, '💡 Съвети за сканиране'),
+      h('div', { style: { fontSize: '13px', lineHeight: '1.8', color: 'var(--text)' },
+        innerHTML: `
+          <span style="color:var(--accent)">①</span> Снимайте при добро осветление<br>
+          <span style="color:var(--accent)">②</span> Документът да е цял в кадъра<br>
+          <span style="color:var(--accent)">③</span> Избягвайте ъгли и сенки<br>
+          <span style="color:var(--accent)">④</span> След сканиране проверете данните<br>
+          <span style="color:var(--accent)">⑤</span> Експортирайте в края на деня
+        `
+      })
+    ));
+  }
+
+  // ── RECORDS TAB ──
+  if (state.activeTab === 'records') {
+    if (state.records.length > 3) {
+      const sw = h('div', { className: 'search-wrap' });
+      sw.appendChild(h('span', { className: 'search-icon' }, '🔍'));
+      const si = h('input', { placeholder: 'Търси по партньор, номер, артикул...', value: state.searchQuery,
+        onInput: (e) => { state.searchQuery = e.target.value; render(); }
+      });
+      sw.appendChild(si);
+      main.appendChild(sw);
+    }
+
+    const q = state.searchQuery.toLowerCase();
+    const filtered = q ? state.records.filter(r =>
+      (r.docNumber||'').toLowerCase().includes(q) ||
+      (r.partner||'').toLowerCase().includes(q) ||
+      (r.items||[]).some(it => (it.name||'').toLowerCase().includes(q) || (it.code||'').toLowerCase().includes(q))
+    ) : state.records;
+
+    if (!filtered.length) {
+      main.appendChild(h('div', { className: 'empty-state' },
+        h('div', { className: 'icon' }, '📄'),
+        h('div', { style: { fontSize: '16px', fontWeight: 600 } }, q ? 'Няма резултати' : 'Няма записи'),
+        h('div', { style: { fontSize: '13px', marginTop: '8px' } }, q ? 'Опитайте друга дума' : 'Сканирайте първата разписка')
+      ));
+    }
+
+    filtered.forEach((rec, _fi) => {
+      const realIdx = state.records.indexOf(rec);
+      const total = (rec.items||[]).reduce((s,it) => s + (it.quantity||0)*(it.price||0), 0);
+      const card = h('div', { className: 'card', style: { animationDelay: (_fi * 0.05) + 's' } });
+
+      // Header
+      const head = h('div', { style: { padding: '14px 14px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' } });
+      const left = h('div', null,
+        h('div', { style: { fontSize: '14px', fontWeight: 700, color: 'var(--text-bright)', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' } },
+          h('span', null, '📄 ' + (rec.docNumber || `#${realIdx + 1}`)),
+          h('span', { style: { background: 'var(--bg-deep)', color: 'var(--text-dim)', borderRadius: '6px', padding: '2px 8px', fontSize: '11px', fontFamily: 'var(--mono)' } }, rec.date || '—')
+        ),
+        rec.partner ? h('div', { style: { fontSize: '12px', color: 'var(--text-dim)', marginTop: '3px' } }, '🏢 ' + rec.partner) : null
+      );
+      head.appendChild(left);
+
+      const btns = h('div', { style: { display: 'flex', gap: '4px', flexShrink: 0 } });
+      btns.appendChild(h('button', { className: 'btn-icon', onClick: () => duplicateRecord(realIdx), title: 'Дублирай' }, '📋'));
+      btns.appendChild(h('button', { className: 'btn-icon', onClick: () => startEdit(realIdx), title: 'Редактирай' }, '✏️'));
+      btns.appendChild(h('button', { className: 'btn-icon btn-danger', onClick: () => deleteRecord(realIdx), title: 'Изтрий' }, '🗑'));
+      head.appendChild(btns);
+      card.appendChild(head);
+
+      // Items table
+      const table = h('div', { className: 'items-table', style: { margin: '10px 14px 14px' } });
+      table.appendChild(h('div', { className: 't-header' },
+        h('span', null, 'Артикул'), h('span', { style: { textAlign: 'right' } }, 'К-во'),
+        h('span', { style: { textAlign: 'right' } }, 'Цена'), h('span', { style: { textAlign: 'right' } }, 'Стойност')
+      ));
+      (rec.items||[]).forEach(it => {
+        const val = ((it.quantity||0)*(it.price||0)).toFixed(2);
+        table.appendChild(h('div', { className: 't-row' },
+          h('span', { style: { color: 'var(--text)', wordBreak: 'break-word' } },
+            it.name + (it.code ? h('span', { style: { color: 'var(--text-dim)', fontSize: '10px' } }, ' ' + it.code).outerHTML || '' : '')
+          ),
+          h('span', { style: { textAlign: 'right', color: 'var(--text-dim)', fontSize: '11px' } }, (it.quantity||0) + ' ' + (it.unit||'')),
+          h('span', { style: { textAlign: 'right', color: 'var(--text-dim)', fontSize: '11px' } }, (it.price||0).toFixed(2)),
+          h('span', { style: { textAlign: 'right', color: 'var(--text-bright)', fontWeight: 600 } }, val)
+        ));
+      });
+      table.appendChild(h('div', { className: 't-total' },
+        h('span', { style: { fontWeight: 700, color: 'var(--text-bright)', fontSize: '13px' } }, 'Общо'),
+        h('span'), h('span'),
+        h('span', { style: { textAlign: 'right', fontWeight: 700, color: 'var(--accent)', fontSize: '13px' } }, total.toFixed(2) + ' лв')
+      ));
+      card.appendChild(table);
+
+      main.appendChild(card);
+    });
+  }
+
+  // ── EXPORT TAB ──
+  if (state.activeTab === 'export') {
+    const box = h('div', { style: { background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '20px' } });
+
+    box.appendChild(h('div', { style: { fontSize: '16px', fontWeight: 700, color: 'var(--text-bright)', marginBottom: '16px' } }, '⬇️ Експорт за Microinvest Склад Про'));
+
+    box.appendChild(h('div', null, h('label', null, 'Формат')));
+    const sel = h('select', { value: state.exportFormat, onChange: (e) => { state.exportFormat = e.target.value; } });
+    sel.appendChild(h('option', { value: 'csv' }, 'TXT (Tab-separated) — препоръчан'));
+    sel.appendChild(h('option', { value: 'xml' }, 'XML'));
+    box.appendChild(sel);
+
+    const todayCount2 = state.records.filter(r => new Date(r.timestamp).toDateString() === new Date().toDateString()).length;
+
+    box.appendChild(h('div', { style: { display: 'flex', gap: '10px', marginTop: '16px' } },
+      h('button', { className: 'btn-secondary btn-green', onClick: () => doExport('today'), style: { flex: 1 } },
+        `📅 Днешни (${todayCount2})`),
+      h('button', { className: 'btn-secondary btn-green', onClick: () => doExport('all'), style: { flex: 1 } },
+        `📄 Всички (${state.records.length})`)
+    ));
+
+    // Info
+    box.appendChild(h('div', { style: { marginTop: '20px', padding: '14px', background: 'var(--bg-deep)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)' } },
+      h('div', { style: { fontSize: '12px', fontWeight: 700, color: 'var(--text-bright)', marginBottom: '8px' } }, 'Как да импортирате:'),
+      h('div', { style: { fontSize: '12px', color: 'var(--text)', lineHeight: 1.7 },
+        innerHTML: `
+          <strong style="color:var(--accent)">TXT:</strong> Microinvest → Операции → Импорт → Избери файла<br>
+          <strong style="color:var(--accent)">XML:</strong> Microinvest → Операции → Импорт XML → Избери файла<br><br>
+          Колони: Номер, Дата, Партньор, Код, Наименование, Мярка, Количество, Ед.цена, Стойност
+        `
+      })
+    ));
+
+    if (state.records.length > 0) {
+      box.appendChild(h('div', { style: { textAlign: 'center', marginTop: '20px', paddingTop: '16px', borderTop: '1px solid var(--border)' } },
+        h('button', { onClick: clearAll, style: {
+          background: 'none', border: 'none', color: 'var(--red)', fontSize: '13px',
+          cursor: 'pointer', fontFamily: 'var(--font)', padding: '8px'
+        } }, '🗑 Изтрий всички записи')
+      ));
+    }
+
+    main.appendChild(box);
+  }
+
+  frag.appendChild(main);
+  return frag;
+}
+
+function renderEdit() {
+  const ed = state.editData;
+  const frag = document.createDocumentFragment();
+
+  const header = h('header', { className: 'app-header' },
+    h('div', { style: { maxWidth: '800px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' } },
+      h('button', { className: 'btn-icon', onClick: cancelEdit }, '←'),
+      h('div', { style: { fontSize: '17px', fontWeight: 700, color: 'var(--text-bright)' } }, '✏️ Редактиране'),
+      h('button', { onClick: saveEdit, style: {
+        background: 'var(--green-bg)', border: '1px solid rgba(46,168,90,.3)', borderRadius: '10px',
+        color: 'var(--green)', padding: '8px 16px', fontSize: '14px', fontWeight: 700,
+        fontFamily: 'var(--font)', cursor: 'pointer'
+      } }, '✓ Запази')
+    )
+  );
+  frag.appendChild(header);
+
+  const main = h('main', { style: { maxWidth: '800px', margin: '0 auto', padding: '16px 16px 100px' } });
+
+  // Doc fields
+  const fields = h('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '16px' } });
+  
+  const f1 = h('div'); f1.appendChild(h('label', null, 'Номер документ'));
+  const i1 = h('input', { value: ed.docNumber || '', onInput: (e) => { state.editData.docNumber = e.target.value; } });
+  f1.appendChild(i1); fields.appendChild(f1);
+
+  const f2 = h('div'); f2.appendChild(h('label', null, 'Дата'));
+  const i2 = h('input', { value: ed.date || '', onInput: (e) => { state.editData.date = e.target.value; } });
+  f2.appendChild(i2); fields.appendChild(f2);
+
+  const f3 = h('div', { style: { gridColumn: '1/-1' } }); f3.appendChild(h('label', null, 'Партньор'));
+  const i3 = h('input', { value: ed.partner || '', onInput: (e) => { state.editData.partner = e.target.value; } });
+  f3.appendChild(i3); fields.appendChild(f3);
+
+  const f4 = h('div', { style: { gridColumn: '1/-1' } }); f4.appendChild(h('label', null, 'Забележка'));
+  const i4 = h('input', { value: ed.note || '', onInput: (e) => { state.editData.note = e.target.value; } });
+  f4.appendChild(i4); fields.appendChild(f4);
+
+  main.appendChild(fields);
+
+  // Items header
+  main.appendChild(h('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' } },
+    h('div', { style: { fontSize: '14px', fontWeight: 700, color: 'var(--text-bright)' } }, `📦 Артикули (${(ed.items||[]).length})`),
+    h('button', { className: 'btn-icon', style: { fontSize: '12px', padding: '6px 12px' }, onClick: () => {
+      state.editData.items = [...(state.editData.items||[]), { code: '', name: '', unit: 'бр.', quantity: 0, price: 0 }];
+      render();
+    } }, '+ Нов')
+  ));
+
+  // Items
+  (ed.items||[]).forEach((item, ii) => {
+    const block = h('div', { className: 'item-block' });
+    block.appendChild(h('button', { className: 'remove-item', onClick: () => {
+      state.editData.items = state.editData.items.filter((_,j) => j !== ii);
+      render();
+    } }, '✕'));
+
+    const r1 = h('div', { style: { display: 'flex', gap: '8px', marginBottom: '8px' } });
+    const c1 = h('div', { style: { flex: '0 0 30%' } }); c1.appendChild(h('label', null, 'Код'));
+    const ci1 = h('input', { value: item.code||'', onInput: (e) => { state.editData.items[ii].code = e.target.value; } });
+    c1.appendChild(ci1); r1.appendChild(c1);
+    const c2 = h('div', { style: { flex: 1 } }); c2.appendChild(h('label', null, 'Наименование'));
+    const ci2 = h('input', { value: item.name||'', onInput: (e) => { state.editData.items[ii].name = e.target.value; } });
+    c2.appendChild(ci2); r1.appendChild(c2);
+    block.appendChild(r1);
+
+    const r2 = h('div', { style: { display: 'flex', gap: '8px' } });
+    const c3 = h('div', { style: { flex: 1 } }); c3.appendChild(h('label', null, 'Мярка'));
+    const ci3 = h('input', { value: item.unit||'', onInput: (e) => { state.editData.items[ii].unit = e.target.value; } });
+    c3.appendChild(ci3); r2.appendChild(c3);
+    const c4 = h('div', { style: { flex: 1 } }); c4.appendChild(h('label', null, 'Количество'));
+    const ci4 = h('input', { type: 'number', value: item.quantity||0, onInput: (e) => { state.editData.items[ii].quantity = parseFloat(e.target.value)||0; } });
+    c4.appendChild(ci4); r2.appendChild(c4);
+    const c5 = h('div', { style: { flex: 1 } }); c5.appendChild(h('label', null, 'Ед.цена'));
+    const ci5 = h('input', { type: 'number', step: '0.01', value: item.price||0, onInput: (e) => { state.editData.items[ii].price = parseFloat(e.target.value)||0; } });
+    c5.appendChild(ci5); r2.appendChild(c5);
+    block.appendChild(r2);
+
+    const val = ((item.quantity||0)*(item.price||0)).toFixed(2);
+    block.appendChild(h('div', { style: { textAlign: 'right', marginTop: '8px', fontSize: '13px', color: 'var(--accent)', fontWeight: 700, fontFamily: 'var(--mono)' } }, 'Стойност: ' + val + ' лв'));
+
+    main.appendChild(block);
+  });
+
+  // Add item
+  main.appendChild(h('button', { onClick: () => {
+    state.editData.items = [...(state.editData.items||[]), { code: '', name: '', unit: 'бр.', quantity: 0, price: 0 }];
+    render();
+  }, style: {
+    width: '100%', padding: '14px', border: '1.5px dashed var(--border)', borderRadius: 'var(--radius)',
+    background: 'none', color: 'var(--text-dim)', fontSize: '14px', cursor: 'pointer',
+    fontFamily: 'var(--font)', fontWeight: 600, marginTop: '4px'
+  } }, '+ Добави артикул'));
+
+  // Bottom actions
+  main.appendChild(h('div', { style: { display: 'flex', gap: '10px', marginTop: '24px' } },
+    h('button', { className: 'btn-secondary', onClick: cancelEdit, style: { flex: 1 } }, 'Отказ'),
+    h('button', { className: 'btn-secondary btn-green', onClick: saveEdit, style: { flex: 1 } }, '✓ Запази')
+  ));
+
+  frag.appendChild(main);
+  return frag;
+}
+
+// ═══════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════
+render();
+</script>
+
+<div id="toast" class="toast" style="display:none"></div>
+</body>
+</html>
